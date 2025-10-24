@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { name: "Inicio", href: "/dashboard", icon: Dumbbell },
+  { name: "Users", href: "/dashboard/users", icon: Users },
   { name: "Clientes", href: "/dashboard/clients", icon: Users },
   { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
   { name: "Suscripciones", href: "/dashboard/subscriptions", icon: Calendar },
