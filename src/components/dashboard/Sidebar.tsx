@@ -11,6 +11,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  BarChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,9 @@ const navItems = [
   { name: "Clientes", href: "/dashboard/clients", icon: Users },
   { name: "Pagos", href: "/dashboard/payments", icon: CreditCard },
   { name: "Suscripciones", href: "/dashboard/subscriptions", icon: Calendar },
+  { name: "Horarios", href: "/dashboard/schedule", icon: Calendar },
+  { name: "Entrenadores", href: "/dashboard/trainers", icon: Users },
+  { name: "Reportes", href: "/dashboard/reports", icon: BarChart },
   { name: "Recordatorios", href: "/dashboard/subscriptions/reminders", icon: Bell },
 ];
 
@@ -28,9 +32,6 @@ export default function Sidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-white">
-      <div className="px-6 py-4 border-b text-xl font-bold tracking-tight">
-        Gym Manager
-      </div>
 
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {

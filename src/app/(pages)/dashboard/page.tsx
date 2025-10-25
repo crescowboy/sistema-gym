@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function DashboardPage() {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full">
             <Card>
                 <CardHeader>
                     <CardTitle>Bienvenido al panel del gym</CardTitle>
