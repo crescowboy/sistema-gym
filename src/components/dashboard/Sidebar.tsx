@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Dumbbell,
@@ -29,6 +29,7 @@ const navItems = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-white">
@@ -55,7 +56,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-3 border-t">
-        <Button variant="ghost" className="w-full flex items-center gap-2 justify-start text-gray-700">
+        <Button variant="ghost" className="w-full flex items-center gap-2 justify-start text-gray-700" onClick={() => router.push('/')}>
           <LogOut className="h-4 w-4" />
           Cerrar sesion
         </Button>
