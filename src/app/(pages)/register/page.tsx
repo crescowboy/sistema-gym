@@ -16,7 +16,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex justify-center items-center w-full bg-black">
+        <div className="flex justify-center items-center h-screen w-full">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center">Crear cuenta</CardTitle>

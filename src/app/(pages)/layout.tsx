@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 export default function RootLayout({ children }: { children: ReactNode }){
     const pathname = usePathname();
-    const isPublicPage = ['/', '/register'].includes(pathname);
+    const isPublicPage = ['/','/login', '/register'].includes(pathname);
 
     return(
         <div className='min-h-screen flex flex-col'>
