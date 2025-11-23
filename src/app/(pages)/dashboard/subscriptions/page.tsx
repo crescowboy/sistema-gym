@@ -8,6 +8,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal } from "lucide-react";
 import {
@@ -54,60 +55,67 @@ export default function SubscriptionsPage() {
         <h1 className="text-2xl font-bold">Suscripciones</h1>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Plan</TableHead>
-            <TableHead>Fecha de Inicio</TableHead>
-            <TableHead>Fecha de Fin</TableHead>
-            <TableHead>Estado</TableHead>
-            <TableHead>
-              <span className="sr-only">Acciones</span>
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {subscriptions.map((subscription) => (
-            <TableRow key={subscription.id}>
-              <TableCell>{subscription.client}</TableCell>
-              <TableCell>{subscription.plan}</TableCell>
-              <TableCell>{subscription.startDate}</TableCell>
-              <TableCell>{subscription.endDate}</TableCell>
-              <TableCell>
-                <Badge
-                  variant={subscription.status === "Activa" ? "default" : "destructive"}
-                >
-                  {subscription.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Abrir menú</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        navigator.clipboard.writeText(String(subscription.id))
-                      }
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Suscripciones</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Fecha de Inicio</TableHead>
+                <TableHead>Fecha de Fin</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>
+                  <span className="sr-only">Acciones</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {subscriptions.map((subscription) => (
+                <TableRow key={subscription.id}>
+                  <TableCell>{subscription.client}</TableCell>
+                  <TableCell>{subscription.plan}</TableCell>
+                  <TableCell>{subscription.startDate}</TableCell>
+                  <TableCell>{subscription.endDate}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={subscription.status === "Activa" ? "default" : "destructive"}
                     >
-                      Copiar ID
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>Renovar</DropdownMenuItem>
-                    <DropdownMenuItem>Cancelar</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                      {subscription.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menú</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigator.clipboard.writeText(String(subscription.id))
+                          }
+                        >
+                          Copiar ID
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>Renovar</DropdownMenuItem>
+                        <DropdownMenuItem>Cancelar</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Avatar,
   AvatarImage,
@@ -94,66 +95,73 @@ export default function TrainersPage() {
         </Sheet>
       </div>
 
-      {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Especialización</TableHead>
-              <TableHead>
-                <span className="sr-only">Acciones</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {trainers.map((trainer) => (
-              <TableRow key={trainer._id}>
-                <TableCell>
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage src={`/avatars/${trainer._id}.png`} alt={trainer.name} />
-                      <AvatarFallback>{trainer.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span>{trainer.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{trainer.email}</TableCell>
-                <TableCell>{trainer.phone}</TableCell>
-                <TableCell>{trainer.specialization}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Abrir menú</span>
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                      <DropdownMenuItem
-                        onClick={() => navigator.clipboard.writeText(String(trainer._id))}
-                      >
-                        Copiar ID
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Eliminar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
+      <Card>
+        <CardHeader>
+          <CardTitle>Lista de Entrenadores</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Teléfono</TableHead>
+                  <TableHead>Especialización</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {trainers.map((trainer) => (
+                  <TableRow key={trainer._id}>
+                    <TableCell>
+                      <div className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarImage src={`/avatars/${trainer._id}.png`} alt={trainer.name} />
+                          <AvatarFallback>{trainer.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span>{trainer.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{trainer.email}</TableCell>
+                    <TableCell>{trainer.phone}</TableCell>
+                    <TableCell>{trainer.specialization}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => navigator.clipboard.writeText(String(trainer._id))}
+                          >
+                            Copiar ID
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

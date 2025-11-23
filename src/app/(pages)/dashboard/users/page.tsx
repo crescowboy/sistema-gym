@@ -41,6 +41,9 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [updatedUser, setUpdatedUser] = useState({ name: "", email: "", password: "" });
 
   const fetchUsers = async () => {
     try {
@@ -83,6 +86,70 @@ export default function UsersPage() {
       }
     } catch (error) {
       console.error("Error creating user:", error);
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) {
+      return;
+    }
+    try {
+      const response = await fetch(`/api/users`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: userId }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+      } else {
+        console.error("Error deleting user:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  const handleEditClick = (user: User) => {
+    setEditingUser(user);
+    setUpdatedUser({ name: user.name, email: user.email, password: "" });
+    setIsEditSheetOpen(true);
+  };
+
+  const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUpdatedUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    try {
+      const response = await fetch(`/api/users`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          _id: editingUser._id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          password: updatedUser.password,
+        }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setIsEditSheetOpen(false);
+        setEditingUser(null);
+      } else {
+        console.error("Error updating user:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
     }
   };
 
@@ -170,8 +237,8 @@ export default function UsersPage() {
                             Copiar ID
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditClick(user)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(user._id)}>Eliminar</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -182,6 +249,41 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
+      
+      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Editar Usuario</SheetTitle>
+          </SheetHeader>
+          <form onSubmit={handleUpdateSubmit} className="space-y-4 py-4">
+            <Input
+              name="name"
+              placeholder="Nombre"
+              value={updatedUser.name}
+              onChange={handleUpdateInputChange}
+            />
+            <Input
+              name="email"
+              placeholder="Email"
+              type="email"
+      
+              value={updatedUser.email}
+              onChange={handleUpdateInputChange}
+            />
+            <Input
+              name="password"
+              placeholder="Nueva Contraseña (dejar en blanco para no cambiar)"
+              type="password"
+              value={updatedUser.password}
+              onChange={handleUpdateInputChange}
+            />
+            <Button type="submit" className="w-full">
+              Actualizar
+            </Button>
+          </form>
+        </SheetContent>
+      </Sheet>
+
     </div>
   );
 }
