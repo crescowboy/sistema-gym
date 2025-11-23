@@ -2,30 +2,32 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Client } from "@/models/Client";
+import { Trainer } from "@/models/Trainer";
 import { useEffect, useState } from "react";
 
-interface ClientFormProps {
-  onSubmit: (client: Omit<Client, "_id" | "startDate" | "membershipStatus">) => void;
-  client?: Client;
+interface TrainerFormProps {
+  onSubmit: (trainer: Omit<Trainer, "_id">) => void;
+  trainer?: Trainer;
 }
 
-export function ClientForm({ onSubmit, client }: ClientFormProps) {
+export function TrainerForm({ onSubmit, trainer }: TrainerFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
+    specialization: "",
   });
 
   useEffect(() => {
-    if (client) {
+    if (trainer) {
       setFormData({
-        name: client.name,
-        email: client.email,
-        phone: client.phone || "",
+        name: trainer.name,
+        email: trainer.email,
+        phone: trainer.phone || "",
+        specialization: trainer.specialization || "",
       });
     }
-  }, [client]);
+  }, [trainer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,7 +37,12 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({ name: "", email: "", phone: "" });
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      specialization: "",
+    });
   };
 
   return (
@@ -57,6 +64,12 @@ export function ClientForm({ onSubmit, client }: ClientFormProps) {
         name="phone"
         placeholder="Teléfono"
         value={formData.phone}
+        onChange={handleChange}
+      />
+      <Input
+        name="specialization"
+        placeholder="Especialización"
+        value={formData.specialization}
         onChange={handleChange}
       />
       <Button type="submit" className="w-full">

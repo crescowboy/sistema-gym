@@ -39,40 +39,89 @@ interface User {
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/users");
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await fetch("/api/users");
-        const data = await response.json();
-        setUsers(data);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewUser((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newUser),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+        setNewUser({ name: "", email: "", password: "" });
+        setIsSheetOpen(false);
+      } else {
+        console.error("Error creating user:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
+  };
 
   return (
     <div className='space-y-6 w-full'>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Usuarios</h1>
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
-            <Button>Agregar Usuario</Button>
+            <Button onClick={() => setIsSheetOpen(true)}>Agregar Usuario</Button>
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Agregar Nuevo Usuario</SheetTitle>
             </SheetHeader>
-            <form className="space-y-4 py-4">
-              <Input placeholder="Nombre" />
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Contraseña" type="password" />
-              <Button type="submit" className="w-full">Guardar</Button>
+            <form onSubmit={handleSubmit} className="space-y-4 py-4">
+              <Input
+                name="name"
+                placeholder="Nombre"
+                value={newUser.name}
+                onChange={handleInputChange}
+              />
+              <Input
+                name="email"
+                placeholder="Email"
+                type="email"
+                value={newUser.email}
+                onChange={handleInputChange}
+              />
+              <Input
+                name="password"
+                placeholder="Contraseña"
+                type="password"
+                value={newUser.password}
+                onChange={handleInputChange}
+              />
+              <Button type="submit" className="w-full">
+                Guardar
+              </Button>
             </form>
           </SheetContent>
         </Sheet>
