@@ -2,32 +2,25 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trainer } from "@/models/Trainer";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface TrainerFormProps {
-  onSubmit: (trainer: Omit<Trainer, "_id">) => void;
-  trainer?: Trainer;
+  onSubmit: (trainer: any) => void;
+  defaultValues?: {
+    name?: string;
+    email?: string;
+    phone?: string;
+    specialization?: string;
+  };
 }
 
-export function TrainerForm({ onSubmit, trainer }: TrainerFormProps) {
+export function TrainerForm({ onSubmit, defaultValues }: TrainerFormProps) {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    specialization: "",
+    name: defaultValues?.name || "",
+    email: defaultValues?.email || "",
+    phone: defaultValues?.phone || "",
+    specialization: defaultValues?.specialization || "",
   });
-
-  useEffect(() => {
-    if (trainer) {
-      setFormData({
-        name: trainer.name,
-        email: trainer.email,
-        phone: trainer.phone || "",
-        specialization: trainer.specialization || "",
-      });
-    }
-  }, [trainer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -37,12 +30,6 @@ export function TrainerForm({ onSubmit, trainer }: TrainerFormProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSubmit(formData);
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      specialization: "",
-    });
   };
 
   return (

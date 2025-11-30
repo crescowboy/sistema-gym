@@ -11,24 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Input } from "@/components/ui/input";
-import { MoreHorizontal } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { CreateUserDialog } from "@/components/users/CreateUserDialog";
+import { EditUserDialog } from "@/components/users/EditUserDialog";
 
 interface User {
   _id: string;
@@ -40,9 +27,9 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [updatedUser, setUpdatedUser] = useState({ name: "", email: "", password: "" });
 
   const fetchUsers = async () => {
@@ -80,7 +67,7 @@ export default function UsersPage() {
       if (response.ok) {
         fetchUsers();
         setNewUser({ name: "", email: "", password: "" });
-        setIsSheetOpen(false);
+        setIsNewUserDialogOpen(false);
       } else {
         console.error("Error creating user:", await response.json());
       }
@@ -115,7 +102,7 @@ export default function UsersPage() {
   const handleEditClick = (user: User) => {
     setEditingUser(user);
     setUpdatedUser({ name: user.name, email: user.email, password: "" });
-    setIsEditSheetOpen(true);
+    setIsEditDialogOpen(true);
   };
 
   const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,7 +130,7 @@ export default function UsersPage() {
 
       if (response.ok) {
         fetchUsers();
-        setIsEditSheetOpen(false);
+        setIsEditDialogOpen(false);
         setEditingUser(null);
       } else {
         console.error("Error updating user:", await response.json());
@@ -157,41 +144,13 @@ export default function UsersPage() {
     <div className='space-y-6 w-full'>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Usuarios</h1>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button onClick={() => setIsSheetOpen(true)}>Agregar Usuario</Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Agregar Nuevo Usuario</SheetTitle>
-            </SheetHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 py-4">
-              <Input
-                name="name"
-                placeholder="Nombre"
-                value={newUser.name}
-                onChange={handleInputChange}
-              />
-              <Input
-                name="email"
-                placeholder="Email"
-                type="email"
-                value={newUser.email}
-                onChange={handleInputChange}
-              />
-              <Input
-                name="password"
-                placeholder="Contraseña"
-                type="password"
-                value={newUser.password}
-                onChange={handleInputChange}
-              />
-              <Button type="submit" className="w-full">
-                Guardar
-              </Button>
-            </form>
-          </SheetContent>
-        </Sheet>
+        <CreateUserDialog
+          open={isNewUserDialogOpen}
+          onOpenChange={setIsNewUserDialogOpen}
+          onSubmit={handleSubmit}
+          newUser={newUser}
+          onInputChange={handleInputChange}
+        />
       </div>
 
       <Card>
@@ -231,11 +190,6 @@ export default function UsersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(user._id)}
-                          >
-                            Copiar ID
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(user)}>Editar</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(user._id)}>Eliminar</DropdownMenuItem>
@@ -250,39 +204,13 @@ export default function UsersPage() {
         </CardContent>
       </Card>
       
-      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Editar Usuario</SheetTitle>
-          </SheetHeader>
-          <form onSubmit={handleUpdateSubmit} className="space-y-4 py-4">
-            <Input
-              name="name"
-              placeholder="Nombre"
-              value={updatedUser.name}
-              onChange={handleUpdateInputChange}
-            />
-            <Input
-              name="email"
-              placeholder="Email"
-              type="email"
-      
-              value={updatedUser.email}
-              onChange={handleUpdateInputChange}
-            />
-            <Input
-              name="password"
-              placeholder="Nueva Contraseña (dejar en blanco para no cambiar)"
-              type="password"
-              value={updatedUser.password}
-              onChange={handleUpdateInputChange}
-            />
-            <Button type="submit" className="w-full">
-              Actualizar
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
+      <EditUserDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSubmit={handleUpdateSubmit}
+        updatedUser={updatedUser}
+        onInputChange={handleUpdateInputChange}
+      />
 
     </div>
   );

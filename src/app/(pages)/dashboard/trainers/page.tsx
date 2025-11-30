@@ -2,13 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import {
   Table,
   TableHeader,
   TableRow,
@@ -32,14 +25,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
-import { Trainer } from "@/models/Trainer";
+import Trainer from "@/models/Trainer"
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrainerForm } from "@/components/core/TrainerForm";
+import { CreateTrainerDialog } from "@/components/trainers/CreateTrainerDialog";
+import { EditTrainerDialog } from "@/components/trainers/EditTrainerDialog"; 
+
+type TrainerType = InstanceType<typeof Trainer>;
 
 export default function TrainersPage() {
-  const [trainers, setTrainers] = useState<Trainer[]>([]);
+  const [trainers, setTrainers] = useState<TrainerType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingTrainer, setEditingTrainer] = useState<TrainerType | null>(null);
 
   const fetchTrainers = async () => {
     try {
@@ -57,7 +55,7 @@ export default function TrainersPage() {
     fetchTrainers();
   }, []);
 
-  const handleAddTrainer = async (trainer: Omit<Trainer, "_id">) => {
+  const handleAddTrainer = async (trainer: Omit<TrainerType, "_id">) => {
     try {
       const response = await fetch("/api/trainers", {
         method: "POST",
@@ -69,7 +67,7 @@ export default function TrainersPage() {
 
       if (response.ok) {
         fetchTrainers();
-        setIsSheetOpen(false);
+        setIsCreateDialogOpen(false);
       } else {
         console.error("Error creating trainer:", await response.json());
       }
@@ -78,21 +76,74 @@ export default function TrainersPage() {
     }
   };
 
+  const handleEditTrainer = (trainer: TrainerType) => {
+    setEditingTrainer(trainer);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateTrainer = async (trainer: Omit<TrainerType, "_id">) => {
+    if (!editingTrainer) return;
+    try {
+      const response = await fetch("/api/trainers", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          _id: editingTrainer._id,
+          ...trainer,
+        }),
+      });
+
+      if (response.ok) {
+        fetchTrainers();
+        setIsEditDialogOpen(false);
+        setEditingTrainer(null);
+      } else {
+        console.error("Error updating trainer:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error updating trainer:", error);
+    }
+  };
+
+  const handleDeleteTrainer = async (trainerId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este entrenador?")) {
+      return;
+    }
+    try {
+      const response = await fetch("/api/trainers", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: trainerId }),
+      });
+
+      if (response.ok) {
+        fetchTrainers();
+      } else {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          console.error("Error deleting trainer:", await response.json());
+        } else {
+          console.error("Error deleting trainer:", response.statusText);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting trainer:", error);
+    }
+  };
+
   return (
     <div className="w-full space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Entrenadores</h1>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button onClick={() => setIsSheetOpen(true)}>Agregar Entrenador</Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Agregar Nuevo Entrenador</SheetTitle>
-            </SheetHeader>
-            <TrainerForm onSubmit={handleAddTrainer} />
-          </SheetContent>
-        </Sheet>
+        <CreateTrainerDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
+          onSubmit={handleAddTrainer}
+        />
       </div>
 
       <Card>
@@ -144,14 +195,13 @@ export default function TrainersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(String(trainer._id))}
-                          >
-                            Copiar ID
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditTrainer(trainer)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteTrainer(trainer._id)}>
+                            Eliminar
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -162,6 +212,13 @@ export default function TrainersPage() {
           )}
         </CardContent>
       </Card>
+
+      <EditTrainerDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSubmit={handleUpdateTrainer}
+        trainer={editingTrainer}
+      />
     </div>
   );
 }

@@ -1,24 +1,17 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { useEffect, useState } from "react";
 import {
   Table,
-  TableHeader,
-  TableRow,
-  TableHead,
   TableBody,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClientForm } from "@/components/core/ClientForm";
-import { MoreHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,16 +20,33 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useEffect, useState } from "react";
-import { Client } from "@/models/Client";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MoreHorizontal } from "lucide-react";
+import { CreateClientDialog } from "@/components/clients/CreateClientDialog";
+import { EditClientDialog } from "@/components/clients/EditClientDialog";
+
+interface Client {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+}
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [newClient, setNewClient] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [updatedClient, setUpdatedClient] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
 
   const fetchClients = async () => {
     try {
@@ -54,51 +64,31 @@ export default function ClientsPage() {
     fetchClients();
   }, []);
 
-  const handleAddClient = async (client: Omit<Client, "_id" | "startDate" | "membershipStatus">) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewClient((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     try {
       const response = await fetch("/api/clients", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(client),
+        body: JSON.stringify(newClient),
       });
 
       if (response.ok) {
         fetchClients();
-        setIsSheetOpen(false);
+        setNewClient({ name: "", email: "", phone: "" });
+        setIsNewClientDialogOpen(false);
       } else {
         console.error("Error creating client:", await response.json());
       }
     } catch (error) {
       console.error("Error creating client:", error);
-    }
-  };
-
-  const handleUpdateClient = async (clientData: Omit<Client, "_id" | "startDate" | "membershipStatus">) => {
-    if (!editingClient) return;
-
-    try {
-      const response = await fetch(`/api/clients`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id: editingClient._id,
-          ...clientData,
-        }),
-      });
-
-      if (response.ok) {
-        fetchClients();
-        setIsEditSheetOpen(false);
-        setEditingClient(null);
-      } else {
-        console.error("Error updating client:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error updating client:", error);
     }
   };
 
@@ -127,24 +117,60 @@ export default function ClientsPage() {
 
   const handleEditClick = (client: Client) => {
     setEditingClient(client);
-    setIsEditSheetOpen(true);
+    setUpdatedClient({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUpdatedClient((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingClient) return;
+
+    try {
+      const response = await fetch(`/api/clients`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          _id: editingClient._id,
+          name: updatedClient.name,
+          email: updatedClient.email,
+          phone: updatedClient.phone,
+        }),
+      });
+
+      if (response.ok) {
+        fetchClients();
+        setIsEditDialogOpen(false);
+        setEditingClient(null);
+      } else {
+        console.error("Error updating client:", await response.json());
+      }
+    } catch (error) {
+      console.error("Error updating client:", error);
+    }
   };
 
   return (
-    <div className="w-full space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Clientes</h1>
-        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetTrigger asChild>
-            <Button onClick={() => setIsSheetOpen(true)}>Agregar Cliente</Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>Agregar Nuevo Cliente</SheetTitle>
-            </SheetHeader>
-            <ClientForm onSubmit={handleAddClient} />
-          </SheetContent>
-        </Sheet>
+        <CreateClientDialog
+          open={isNewClientDialogOpen}
+          onOpenChange={setIsNewClientDialogOpen}
+          onSubmit={handleSubmit}
+          newClient={newClient}
+          onInputChange={handleInputChange}
+        />
       </div>
 
       <Card>
@@ -165,7 +191,6 @@ export default function ClientsPage() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Teléfono</TableHead>
-                  <TableHead>Suscripción</TableHead>
                   <TableHead>
                     <span className="sr-only">Acciones</span>
                   </TableHead>
@@ -177,7 +202,6 @@ export default function ClientsPage() {
                     <TableCell>{client.name}</TableCell>
                     <TableCell>{client.email}</TableCell>
                     <TableCell>{client.phone}</TableCell>
-                    <TableCell>{client.membershipStatus}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -188,14 +212,13 @@ export default function ClientsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(String(client._id))}
-                          >
-                            Copiar ID
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleEditClick(client)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(client._id)}>Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditClick(client)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(client._id)}>
+                            Eliminar
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -207,14 +230,13 @@ export default function ClientsPage() {
         </CardContent>
       </Card>
 
-      <Sheet open={isEditSheetOpen} onOpenChange={setIsEditSheetOpen}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Editar Cliente</SheetTitle>
-          </SheetHeader>
-          <ClientForm onSubmit={handleUpdateClient} client={editingClient} />
-        </SheetContent>
-      </Sheet>
+      <EditClientDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSubmit={handleUpdateSubmit}
+        updatedClient={updatedClient}
+        onInputChange={handleUpdateInputChange}
+      />
     </div>
   );
 }
