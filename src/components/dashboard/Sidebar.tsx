@@ -14,6 +14,7 @@ import {
   BarChart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
   { name: "Inicio", href: "/dashboard", icon: Dumbbell },
@@ -31,8 +32,32 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        router.push("/login");
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-white">
+      <div className="p-4 border-b flex items-center gap-3">
+        <Avatar className="h-10 w-10">
+          <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+          <AvatarFallback>US</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-900">Admin User</p>
+          <p className="text-xs text-gray-500">admin@gimnasio.com</p>
+        </div>
+      </div>
 
       <nav className="flex-1 p-3 space-y-1">
         {navItems.map((item) => {
@@ -56,7 +81,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="p-3 border-t">
-        <Button variant="ghost" className="w-full flex items-center gap-2 justify-start text-gray-700" onClick={() => router.push('/')}>
+        <Button variant="ghost" className="w-full flex items-center gap-2 justify-start text-gray-700" onClick={handleLogout}>
           <LogOut className="h-4 w-4" />
           Cerrar sesion
         </Button>

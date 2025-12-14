@@ -27,7 +27,21 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ message: "Login successful" }, { status: 200 });
+    const response = NextResponse.json(
+      { message: "Login successful", userId: user._id },
+      { status: 200 }
+    );
+
+    // Guardar cookie de sesión
+    response.cookies.set("isAuthenticated", "true", {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7, // 7 días
+      path: "/",
+    });
+
+    return response;
   } catch (error: unknown) {
     console.error("Login error:", error);
     let errorMessage = "Internal server error";
