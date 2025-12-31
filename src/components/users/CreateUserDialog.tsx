@@ -1,66 +1,64 @@
-import { useState } from "react";
+"use client";
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { UserForm } from "@/components/core/UserForm";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface CreateUserDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  newUser: { name: string; email: string; password: string };
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSuccess: () => void;
 }
 
-export function CreateUserDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-  newUser,
-  onInputChange,
-}: CreateUserDialogProps) {
+export function CreateUserDialog({ onSuccess }: CreateUserDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (values: any) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create user");
+      }
+
+      toast.success("Usuario creado exitosamente.");
+      onSuccess();
+      setIsOpen(false);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Error al crear el usuario.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button onClick={() => onOpenChange(true)}>Agregar Usuario</Button>
+        <Button onClick={() => setIsOpen(true)}>Agregar Usuario</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Agregar Nuevo Usuario</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 py-4">
-          <Input
-            name="name"
-            placeholder="Nombre"
-            value={newUser.name}
-            onChange={onInputChange}
-          />
-          <Input
-            name="email"
-            placeholder="Email"
-            type="email"
-            value={newUser.email}
-            onChange={onInputChange}
-          />
-          <Input
-            name="password"
-            placeholder="Contraseña"
-            type="password"
-            value={newUser.password}
-            onChange={onInputChange}
-          />
-          <DialogFooter>
-            <Button type="submit" className="w-full">
-              Guardar
-            </Button>
-          </DialogFooter>
-        </form>
+        <UserForm onSubmit={handleSubmit} isLoading={isLoading} />
       </DialogContent>
     </Dialog>
   );

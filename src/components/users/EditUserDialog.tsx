@@ -1,61 +1,92 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { UserForm } from "@/components/core/UserForm";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
 
 interface EditUserDialogProps {
-  open: boolean;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  updatedUser: { name: string; email: string; password: string };
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  user: User | null;
+  onSuccess: () => void;
 }
 
 export function EditUserDialog({
-  open,
+  isOpen,
   onOpenChange,
-  onSubmit,
-  updatedUser,
-  onInputChange,
+  user,
+  onSuccess,
 }: EditUserDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (values: any) => {
+    if (!user) return;
+
+    // If password is an empty string, don't include it in the update
+    const updateData = { ...values };
+    if (updateData.password === "") {
+      delete updateData.password;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/users/${user._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update user");
+      }
+
+      toast.success("Usuario actualizado exitosamente.");
+      onSuccess();
+      onOpenChange(false);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Error al actualizar el usuario.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const initialData = user ? {
+    name: user.name,
+    email: user.email,
+  } : undefined;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Usuario</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 py-4">
-          <Input
-            name="name"
-            placeholder="Nombre"
-            value={updatedUser.name}
-            onChange={onInputChange}
+        {user && (
+          <UserForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            isEdit={true}
           />
-          <Input
-            name="email"
-            placeholder="Email"
-            type="email"
-            value={updatedUser.email}
-            onChange={onInputChange}
-          />
-          <Input
-            name="password"
-            placeholder="Nueva Contraseña (dejar en blanco para no cambiar)"
-            type="password"
-            value={updatedUser.password}
-            onChange={onInputChange}
-          />
-          <DialogFooter>
-            <Button type="submit" className="w-full">
-              Actualizar
-            </Button>
-          </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );

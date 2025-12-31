@@ -23,38 +23,32 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { CreateClientDialog } from "@/components/clients/CreateClientDialog";
 import { EditClientDialog } from "@/components/clients/EditClientDialog";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface Client {
   _id: string;
   name: string;
   email: string;
   phone: string;
+  membershipStatus: 'active' | 'inactive' | 'pending';
 }
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newClient, setNewClient] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  const [isNewClientDialogOpen, setIsNewClientDialogOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [updatedClient, setUpdatedClient] = useState({
-    name: "",
-    email: "",
-    phone: "",
-  });
 
   const fetchClients = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/clients");
       const data = await response.json();
       setClients(data);
     } catch (error) {
       console.error("Error fetching clients:", error);
+      toast.error("Error al cargar los clientes.");
     } finally {
       setLoading(false);
     }
@@ -64,99 +58,44 @@ export default function ClientsPage() {
     fetchClients();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewClient((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/clients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newClient),
-      });
-
-      if (response.ok) {
-        fetchClients();
-        setNewClient({ name: "", email: "", phone: "" });
-        setIsNewClientDialogOpen(false);
-      } else {
-        console.error("Error creating client:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error creating client:", error);
-    }
-  };
-
   const handleDelete = async (clientId: string) => {
     if (!confirm("¿Estás seguro de que deseas eliminar este cliente?")) {
       return;
     }
     try {
-      const response = await fetch(`/api/clients`, {
+      const response = await fetch(`/api/clients/${clientId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ _id: clientId }),
       });
 
       if (response.ok) {
         fetchClients();
+        toast.success("Cliente eliminado exitosamente.");
       } else {
-        console.error("Error deleting client:", await response.json());
+        const errorData = await response.json();
+        console.error("Error deleting client:", errorData);
+        toast.error(errorData.message || "Error al eliminar el cliente.");
       }
     } catch (error) {
       console.error("Error deleting client:", error);
+      toast.error("Error al eliminar el cliente.");
     }
   };
 
   const handleEditClick = (client: Client) => {
     setEditingClient(client);
-    setUpdatedClient({
-      name: client.name,
-      email: client.email,
-      phone: client.phone,
-    });
     setIsEditDialogOpen(true);
   };
-
-  const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setUpdatedClient((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingClient) return;
-
-    try {
-      const response = await fetch(`/api/clients`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id: editingClient._id,
-          name: updatedClient.name,
-          email: updatedClient.email,
-          phone: updatedClient.phone,
-        }),
-      });
-
-      if (response.ok) {
-        fetchClients();
-        setIsEditDialogOpen(false);
-        setEditingClient(null);
-      } else {
-        console.error("Error updating client:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error updating client:", error);
+  
+  const getStatusBadgeVariant = (status: Client["membershipStatus"]) => {
+    switch (status) {
+      case "active":
+        return "default";
+      case "inactive":
+        return "destructive";
+      case "pending":
+        return "secondary";
+      default:
+        return "default";
     }
   };
 
@@ -164,13 +103,7 @@ export default function ClientsPage() {
     <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Clientes</h1>
-        <CreateClientDialog
-          open={isNewClientDialogOpen}
-          onOpenChange={setIsNewClientDialogOpen}
-          onSubmit={handleSubmit}
-          newClient={newClient}
-          onInputChange={handleInputChange}
-        />
+        <CreateClientDialog onSuccess={fetchClients} />
       </div>
 
       <Card>
@@ -191,6 +124,7 @@ export default function ClientsPage() {
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Teléfono</TableHead>
+                  <TableHead>Estado de Membresía</TableHead>
                   <TableHead>
                     <span className="sr-only">Acciones</span>
                   </TableHead>
@@ -202,6 +136,11 @@ export default function ClientsPage() {
                     <TableCell>{client.name}</TableCell>
                     <TableCell>{client.email}</TableCell>
                     <TableCell>{client.phone}</TableCell>
+                    <TableCell>
+                        <Badge variant={getStatusBadgeVariant(client.membershipStatus)}>
+                            {client.membershipStatus}
+                        </Badge>
+                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -231,11 +170,10 @@ export default function ClientsPage() {
       </Card>
 
       <EditClientDialog
-        open={isEditDialogOpen}
+        isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
-        onSubmit={handleUpdateSubmit}
-        updatedClient={updatedClient}
-        onInputChange={handleUpdateInputChange}
+        client={editingClient}
+        onSuccess={fetchClients}
       />
     </div>
   );

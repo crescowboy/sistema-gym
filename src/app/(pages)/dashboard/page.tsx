@@ -1,36 +1,84 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CreditCard, Calendar, TrendingUp } from "lucide-react";
+import dbConnect from "@/lib/dbConnect";
+import Client from "@/models/Client";
+import Payment from "@/models/Payment";
+import Subscription from "@/models/Subscription";
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
-export default function DashboardPage() {
+async function getStats() {
+    await dbConnect();
+
+    const activeClients = await Client.countDocuments({ membershipStatus: 'active' });
+
+    const incomeResult = await Payment.aggregate([
+        { $match: { status: 'completed' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } }
+    ]);
+    const totalIncome = incomeResult.length > 0 ? incomeResult[0].total : 0;
+
+    const activeSubscriptions = await Subscription.countDocuments({ status: 'active' });
+
+    const recentActivity = await Payment.find({ status: 'completed' }).sort({ date: -1 }).limit(5).populate('client', 'name');
+
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+
+    const upcomingExpirations = await Subscription.find({
+        status: 'active',
+        endDate: { $gte: today, $lte: nextWeek }
+    }).sort({ endDate: 1 }).populate('client', 'name');
+
+    return {
+        activeClients,
+        totalIncome,
+        activeSubscriptions,
+        recentActivity,
+        upcomingExpirations
+    };
+}
+
+
+export default async function DashboardPage() {
+    const {
+        activeClients,
+        totalIncome,
+        activeSubscriptions,
+        recentActivity,
+        upcomingExpirations
+    } = await getStats();
+
     const stats = [
         {
             title: "Clientes Activos",
-            value: "1,234",
-            description: "+12% desde el mes pasado",
+            value: activeClients,
+            description: "Total de clientes con membresía activa.",
             icon: Users,
             color: "bg-blue-100",
             iconColor: "text-blue-600",
         },
         {
-            title: "Ingresos",
-            value: "$12,450",
-            description: "+8% desde el mes pasado",
+            title: "Ingresos Totales",
+            value: `${totalIncome.toFixed(2)}`,
+            description: "Suma de todos los pagos completados.",
             icon: CreditCard,
             color: "bg-green-100",
             iconColor: "text-green-600",
         },
         {
             title: "Suscripciones Activas",
-            value: "856",
-            description: "+23% desde el mes pasado",
+            value: activeSubscriptions,
+            description: "Total de suscripciones actualmente activas.",
             icon: Calendar,
             color: "bg-purple-100",
             iconColor: "text-purple-600",
         },
         {
             title: "Tasa de Renovación",
-            value: "92%",
-            description: "+5% desde el mes pasado",
+            value: "N/A", // No se puede calcular con el modelo actual
+            description: "Dato no disponible.",
             icon: TrendingUp,
             color: "bg-orange-100",
             iconColor: "text-orange-600",
@@ -75,72 +123,44 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">Nuevo cliente registrado</p>
-                                    <p className="text-xs text-gray-500">Juan Pérez</p>
-                                </div>
-                                <span className="text-xs text-gray-400">Hace 2 horas</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">Pago recibido</p>
-                                    <p className="text-xs text-gray-500">$150.00</p>
-                                </div>
-                                <span className="text-xs text-gray-400">Hace 4 horas</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">Suscripción renovada</p>
-                                    <p className="text-xs text-gray-500">Plan Premium</p>
-                                </div>
-                                <span className="text-xs text-gray-400">Hace 1 día</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="font-medium text-sm">Recordatorio enviado</p>
-                                    <p className="text-xs text-gray-500">50 clientes</p>
-                                </div>
-                                <span className="text-xs text-gray-400">Hace 1 día</span>
-                            </div>
+                            {recentActivity.length > 0 ? (
+                                recentActivity.map(activity => (
+                                    <div key={activity._id.toString()} className="flex items-center justify-between py-2 border-b">
+                                        <div>
+                                            <p className="font-medium text-sm">Pago recibido de {activity.client?.name || 'N/A'}</p>
+                                            <p className="text-xs text-gray-500">${activity.amount.toFixed(2)}</p>
+                                        </div>
+                                        <span className="text-xs text-gray-400">{format(new Date(activity.date), "d MMM yyyy", { locale: es })}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500">No hay actividad reciente.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Próximos Vencimientos</CardTitle>
+                        <CardTitle>Próximos Vencimientos (7 días)</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">María García</p>
-                                    <p className="text-xs text-gray-500">Premium Plan</p>
-                                </div>
-                                <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Mañana</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">Carlos López</p>
-                                    <p className="text-xs text-gray-500">Basic Plan</p>
-                                </div>
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">En 3 días</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2 border-b">
-                                <div>
-                                    <p className="font-medium text-sm">Ana Martínez</p>
-                                    <p className="text-xs text-gray-500">Premium Plan</p>
-                                </div>
-                                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">En 5 días</span>
-                            </div>
-                            <div className="flex items-center justify-between py-2">
-                                <div>
-                                    <p className="font-medium text-sm">Roberto Sánchez</p>
-                                    <p className="text-xs text-gray-500">Standard Plan</p>
-                                </div>
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">En 10 días</span>
-                            </div>
+                            {upcomingExpirations.length > 0 ? (
+                                upcomingExpirations.map(exp => (
+                                    <div key={exp._id.toString()} className="flex items-center justify-between py-2 border-b">
+                                        <div>
+                                            <p className="font-medium text-sm">{exp.client?.name || 'N/A'}</p>
+                                            <p className="text-xs text-gray-500">Plan {exp.plan}</p>
+                                        </div>
+                                        <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                                            {format(new Date(exp.endDate), "d MMM", { locale: es })}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500">No hay vencimientos próximos.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

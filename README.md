@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sistema de Gimnasio
 
-## Getting Started
+Este es un sistema de gestión de gimnasios creado con Next.js, TypeScript, Tailwind CSS y MongoDB.
 
-First, run the development server:
+## Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Gestión de Usuarios
+- Gestión de Clientes
+- Gestión de Entrenadores
+- Gestión de Pagos
+- Gestión de Suscripciones
+- Gestión de Horarios
+- Reportes
+- Recordatorios de Suscripción
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Cómo Empezar
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerrequisitos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Node.js (v18 o superior)
+- npm
+- MongoDB
 
-## Learn More
+### Instalación
 
-To learn more about Next.js, take a look at the following resources:
+1.  **Clona el repositorio:**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+    ```bash
+    git clone https://github.com/tu-usuario/sistema-gym.git
+    cd sistema-gym
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2.  **Instala las dependencias:**
 
-## Deploy on Vercel
+    ```bash
+    npm install
+    ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3.  **Configura las variables de entorno:**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    Crea un archivo `.env.local` en la raíz del proyecto y añade la URI de tu base de datos de MongoDB:
+
+    ```env
+    MONGODB_URI=mongodb://localhost:27017/gimnasio
+    ```
+
+4.  **Inicia la aplicación:**
+
+    ```bash
+    npm run dev
+    ```
+
+    La aplicación estará disponible en [http://localhost:3000](http://localhost:3000).
+
+## Estructura del Proyecto
+
+-   `src/app/(pages)`: Contiene las páginas principales de la aplicación.
+-   `src/app/api`: Contiene las rutas de la API.
+-   `src/components`: Contiene los componentes de React utilizados en la aplicación.
+-   `src/components/core`: Contiene los componentes de formulario reutilizables.
+-   `src/hooks`: Contiene los hooks personalizados de React.
+-   `src/lib`: Contiene las utilidades y la configuración de la base de datos.
+-   `src/models`: Contiene los modelos de Mongoose para la base de datos.
+
+## Scripts Disponibles
+
+-   `npm run dev`: Inicia el servidor de desarrollo.
+-   `npm run build`: Compila la aplicación para producción.
+-   `npm run start`: Inicia el servidor de producción.
+-   `npm run lint`: Ejecuta el linter de ESLint.

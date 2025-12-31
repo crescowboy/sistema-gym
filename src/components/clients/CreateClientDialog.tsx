@@ -1,65 +1,64 @@
-import { useState } from "react";
+"use client";
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ClientForm } from "@/components/core/ClientForm";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface CreateClientDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  newClient: { name: string; email: string; phone: string };
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSuccess: () => void;
 }
 
-export function CreateClientDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-  newClient,
-  onInputChange,
-}: CreateClientDialogProps) {
+export function CreateClientDialog({ onSuccess }: CreateClientDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (values: any) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/clients", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to create client");
+      }
+
+      toast.success("Cliente creado exitosamente.");
+      onSuccess();
+      setIsOpen(false);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Error al crear el cliente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button onClick={() => onOpenChange(true)}>Agregar Cliente</Button>
+        <Button onClick={() => setIsOpen(true)}>Agregar Cliente</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Agregar Nuevo Cliente</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 py-4">
-          <Input
-            name="name"
-            placeholder="Nombre"
-            value={newClient.name}
-            onChange={onInputChange}
-          />
-          <Input
-            name="email"
-            placeholder="Email"
-            type="email"
-            value={newClient.email}
-            onChange={onInputChange}
-          />
-          <Input
-            name="phone"
-            placeholder="Teléfono"
-            value={newClient.phone}
-            onChange={onInputChange}
-          />
-          <DialogFooter>
-            <Button type="submit" className="w-full">
-              Guardar
-            </Button>
-          </DialogFooter>
-        </form>
+        <ClientForm onSubmit={handleSubmit} isLoading={isLoading} />
       </DialogContent>
     </Dialog>
   );

@@ -1,44 +1,53 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import {
   Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TableHeader,
   TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import { CreateUserDialog } from "@/components/users/CreateUserDialog";
 import { EditUserDialog } from "@/components/users/EditUserDialog";
+import { toast } from "sonner";
 
 interface User {
   _id: string;
   name: string;
   email: string;
+  role: "admin" | "trainer" | "client";
 }
 
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newUser, setNewUser] = useState({ name: "", email: "", password: "" });
-  const [isNewUserDialogOpen, setIsNewUserDialogOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [updatedUser, setUpdatedUser] = useState({ name: "", email: "", password: "" });
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/users");
       const data = await response.json();
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      toast.error("Error al cargar los usuarios.");
     } finally {
       setLoading(false);
     }
@@ -48,32 +57,9 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewUser((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newUser),
-      });
-
-      if (response.ok) {
-        fetchUsers();
-        setNewUser({ name: "", email: "", password: "" });
-        setIsNewUserDialogOpen(false);
-      } else {
-        console.error("Error creating user:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error creating user:", error);
-    }
+  const handleEditClick = (user: User) => {
+    setEditingUser(user);
+    setIsEditDialogOpen(true);
   };
 
   const handleDelete = async (userId: string) => {
@@ -81,76 +67,29 @@ export default function UsersPage() {
       return;
     }
     try {
-      const response = await fetch(`/api/users`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ _id: userId }),
       });
 
       if (response.ok) {
         fetchUsers();
+        toast.success("Usuario eliminado exitosamente.");
       } else {
-        console.error("Error deleting user:", await response.json());
+        const errorData = await response.json();
+        console.error("Error deleting user:", errorData);
+        toast.error(errorData.message || "Error al eliminar el usuario.");
       }
     } catch (error) {
       console.error("Error deleting user:", error);
-    }
-  };
-
-  const handleEditClick = (user: User) => {
-    setEditingUser(user);
-    setUpdatedUser({ name: user.name, email: user.email, password: "" });
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdateInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setUpdatedUser((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleUpdateSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!editingUser) return;
-
-    try {
-      const response = await fetch(`/api/users`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id: editingUser._id,
-          name: updatedUser.name,
-          email: updatedUser.email,
-          password: updatedUser.password,
-        }),
-      });
-
-      if (response.ok) {
-        fetchUsers();
-        setIsEditDialogOpen(false);
-        setEditingUser(null);
-      } else {
-        console.error("Error updating user:", await response.json());
-      }
-    } catch (error) {
-      console.error("Error updating user:", error);
+      toast.error("Error al eliminar el usuario.");
     }
   };
 
   return (
-    <div className='space-y-6 w-full'>
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Usuarios</h1>
-        <CreateUserDialog
-          open={isNewUserDialogOpen}
-          onOpenChange={setIsNewUserDialogOpen}
-          onSubmit={handleSubmit}
-          newUser={newUser}
-          onInputChange={handleInputChange}
-        />
+        <CreateUserDialog onSuccess={fetchUsers} />
       </div>
 
       <Card>
@@ -170,6 +109,7 @@ export default function UsersPage() {
                 <TableRow>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Rol</TableHead>
                   <TableHead>
                     <span className="sr-only">Acciones</span>
                   </TableHead>
@@ -180,6 +120,7 @@ export default function UsersPage() {
                   <TableRow key={user._id}>
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.email}</TableCell>
+                    <TableCell>{user.role}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -191,8 +132,12 @@ export default function UsersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleEditClick(user)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(user._id)}>Eliminar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditClick(user)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(user._id)}>
+                            Eliminar
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -203,15 +148,13 @@ export default function UsersPage() {
           )}
         </CardContent>
       </Card>
-      
-      <EditUserDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        onSubmit={handleUpdateSubmit}
-        updatedUser={updatedUser}
-        onInputChange={handleUpdateInputChange}
-      />
 
+      <EditUserDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        user={editingUser}
+        onSuccess={fetchUsers}
+      />
     </div>
   );
 }

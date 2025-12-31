@@ -1,60 +1,89 @@
+"use client";
+
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ClientForm } from "@/components/core/ClientForm";
+import { useState } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface Client {
+  _id: string;
+  name: string;
+  email: string;
+  phone: string;
+  membershipStatus: 'active' | 'inactive' | 'pending';
+}
 
 interface EditClientDialogProps {
-  open: boolean;
+  isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
-  updatedClient: { name: string; email: string; phone: string };
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  client: Client | null;
+  onSuccess: () => void;
 }
 
 export function EditClientDialog({
-  open,
+  isOpen,
   onOpenChange,
-  onSubmit,
-  updatedClient,
-  onInputChange,
+  client,
+  onSuccess,
 }: EditClientDialogProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handleSubmit = async (values: any) => {
+    if (!client) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/clients/${client._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update client");
+      }
+
+      toast.success("Cliente actualizado exitosamente.");
+      onSuccess();
+      onOpenChange(false);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || "Error al actualizar el cliente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const initialData = client ? {
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    membershipStatus: client.membershipStatus,
+  } : undefined;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Editar Cliente</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="space-y-4 py-4">
-          <Input
-            name="name"
-            placeholder="Nombre"
-            value={updatedClient.name}
-            onChange={onInputChange}
+        {client && (
+          <ClientForm
+            initialData={initialData}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
           />
-          <Input
-            name="email"
-            placeholder="Email"
-            type="email"
-            value={updatedClient.email}
-            onChange={onInputChange}
-          />
-          <Input
-            name="phone"
-            placeholder="Teléfono"
-            value={updatedClient.phone}
-            onChange={onInputChange}
-          />
-          <DialogFooter>
-            <Button type="submit" className="w-full">
-              Actualizar
-            </Button>
-          </DialogFooter>
-        </form>
+        )}
       </DialogContent>
     </Dialog>
   );
