@@ -21,9 +21,6 @@ export default function RootLayout({ children }: { children: ReactNode }){
                       <Link href='/login' >
                         <Button variant="outline">Iniciar Sesion</Button>
                       </Link>
-                      <Link href='/register' >
-                        <Button variant="outline">Registrarse</Button>
-                      </Link>
                     </div>
                 </nav>
             )}

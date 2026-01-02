@@ -26,10 +26,15 @@ export async function POST(request: Request) {
   await dbConnect();
 
   try {
-    const { name, email, password } = await request.json();
+    const body = await request.json();
     const salt = await bcryptjs.genSalt(10);
-    const hashedPassword = await bcryptjs.hash(password, salt);
-    const newUser = new User({ name, email, password: hashedPassword });
+    body.password = await bcryptjs.hash(body.password, salt);
+    
+    if (!body.role) {
+      body.role = 'regular';
+    }
+
+    const newUser = new User(body);
     await newUser.save();
     return NextResponse.json(newUser, { status: 201 });
   } catch (error: unknown) {

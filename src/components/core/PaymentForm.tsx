@@ -27,6 +27,7 @@ const formSchema = z.object({
   client: z.string().min(1, { message: "El cliente es requerido." }),
   amount: z.coerce.number().positive({ message: "El monto debe ser positivo." }),
   status: z.enum(["completed", "pending", "failed"]).default("pending"),
+  type: z.enum(["daily", "monthly"]).default("monthly"),
 });
 
 interface Client {
@@ -55,6 +56,7 @@ export function PaymentForm({
       client: "",
       amount: 0,
       status: "pending",
+      type: "monthly",
     },
   });
 
@@ -153,6 +155,28 @@ export function PaymentForm({
               </FormItem>
             )}
           />
+
+        <FormField
+          control={form.control}
+          name="type"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Tipo de Pago</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecciona un tipo de pago" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  <SelectItem value="daily">Diario</SelectItem>
+                  <SelectItem value="monthly">Mensual</SelectItem>
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Guardando..." : "Guardar Pago"}

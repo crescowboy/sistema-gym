@@ -29,7 +29,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: "admin" | "trainer" | "client";
+  role: "admin" | "regular" | "super";
 }
 
 export default function UsersPage() {
@@ -44,6 +44,7 @@ export default function UsersPage() {
     try {
       const response = await fetch("/api/users");
       const data = await response.json();
+      console.log(data);
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);

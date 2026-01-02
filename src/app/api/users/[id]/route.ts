@@ -31,18 +31,17 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   const { id } = params;
 
   try {
-    const { name, email, password } = await request.json();
+    const body = await request.json();
     
-    const updateData: { name?: string; email?: string; password?: string } = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-
-    if (password) {
+    if (body.password) {
       const salt = await bcryptjs.genSalt(10);
-      updateData.password = await bcryptjs.hash(password, salt);
+      body.password = await bcryptjs.hash(body.password, salt);
+    } else {
+      // If password is an empty string, delete it from the body so it's not updated
+      delete body.password;
     }
 
-    const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true }).select("-password");
+    const updatedUser = await User.findByIdAndUpdate(id, body, { new: true }).select("-password");
 
     if (!updatedUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });

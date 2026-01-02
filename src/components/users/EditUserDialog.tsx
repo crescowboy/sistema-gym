@@ -15,6 +15,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  role: "admin" | "regular" | "super";
 }
 
 interface EditUserDialogProps {
@@ -37,7 +38,14 @@ export function EditUserDialog({
     if (!user) return;
 
     // If password is an empty string, don't include it in the update
-    const updateData = { ...values };
+    const updateData: {
+      name: string;
+      email: string;
+      password?: string;
+      role: "admin" | "regular" | "super";
+    } = {
+      ...values
+    };
     if (updateData.password === "") {
       delete updateData.password;
     }
@@ -71,6 +79,7 @@ export function EditUserDialog({
   const initialData = user ? {
     name: user.name,
     email: user.email,
+    role: user.role,
   } : undefined;
 
   return (

@@ -14,6 +14,11 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
+  role: {
+    type: String,
+    enum: ['regular', 'admin', 'super'],
+    default: 'regular',
+  },
 });
 
 const User = models.User || model("User", UserSchema);

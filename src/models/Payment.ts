@@ -18,6 +18,11 @@ const PaymentSchema = new Schema({
     type: String,
     enum: ['completed', 'pending', 'failed'],
     default: 'pending',
+  },
+  type: {
+    type: String,
+    enum: ['daily', 'monthly'],
+    required: true,
   }
 });
 

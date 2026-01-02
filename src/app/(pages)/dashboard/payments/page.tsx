@@ -37,6 +37,7 @@ interface Payment {
   amount: number;
   date: string;
   status: "completed" | "pending" | "failed";
+  type: "daily" | "monthly";
 }
 
 export default function PaymentsPage() {
@@ -160,6 +161,7 @@ export default function PaymentsPage() {
                 <TableHead>Monto</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Tipo</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -176,6 +178,7 @@ export default function PaymentsPage() {
                       {payment.status}
                     </Badge>
                   </TableCell>
+                  <TableCell>{payment.type}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
